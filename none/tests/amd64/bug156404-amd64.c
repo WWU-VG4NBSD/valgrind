@@ -11,10 +11,12 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "pub_tool_vkiscnums.h"
+
 #define VG_STRINGIFZ(__str)  #__str
 #define VG_STRINGIFY(__str)  VG_STRINGIFZ(__str)
 
-#if defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_freebsd)
+#if defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_freebsd) || defined(VGO_netbsd)
 #if !defined(__NR_readlink)
 # define __NR_readlink 58
 #endif

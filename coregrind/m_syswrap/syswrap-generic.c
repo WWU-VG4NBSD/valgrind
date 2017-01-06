@@ -28,7 +28,7 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#if defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd)
+#if defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_netbsd)
 
 #include "pub_core_basics.h"
 #include "pub_core_vki.h"
@@ -281,19 +281,28 @@ SysRes do_mremap( Addr old_addr, SizeT old_len,
    Bool      ok, d;
    NSegment const* old_seg;
    Addr      advised;
+#  if defined(VGO_linux)
    Bool      f_fixed   = toBool(flags & VKI_MREMAP_FIXED);
    Bool      f_maymove = toBool(flags & VKI_MREMAP_MAYMOVE);
+#  elif defined(VGO_netbsd)
+   Bool      f_fixed   = toBool(flags & VKI_MAP_FIXED);
+   Bool      f_maymove = True;
+#  else
+#    error "Unknown OS"
+#  endif
 
    if (0)
       VG_(printf)("do_remap (old %#lx %lu) (new %#lx %lu) %s %s\n",
-                  old_addr,old_len,new_addr,new_len, 
-                  flags & VKI_MREMAP_MAYMOVE ? "MAYMOVE" : "",
-                  flags & VKI_MREMAP_FIXED ? "FIXED" : "");
+                  old_addr,old_len,new_addr,new_len,
+                  f_maymove ? "MAYMOVE" : "",
+                  f_fixed   ? "FIXED"   : "");
    if (0)
       VG_(am_show_nsegments)(0, "do_remap: before");
 
+#  if defined(VGO_linux)
    if (flags & ~(VKI_MREMAP_FIXED | VKI_MREMAP_MAYMOVE))
       goto eINVAL;
+#  endif
 
    if (!VG_IS_PAGE_ALIGNED(old_addr))
       goto eINVAL;
@@ -646,7 +655,7 @@ Bool ML_(fd_recorded)(Int fd)
 }
 
 /* Returned string must not be modified nor free'd. */
-const HChar *ML_(find_fd_recorded_by_fd)(Int fd)
+const HChar *VG_(find_fd_recorded_by_fd)(Int fd)
 {
    OpenFd *i = allocated_fds;
 
@@ -979,6 +988,52 @@ void VG_(init_preopened_fds)(void)
 
    VG_(close)(sr_Res(f));
 
+#elif defined(VGO_netbsd)
+   Int ret;
+   SysRes f;
+   struct vg_stat st;
+
+   f = VG_(open)("/proc/self/fd", VKI_O_RDONLY, 0);
+   if (sr_isError(f)) {
+      init_preopened_fds_without_proc_self_fd();
+      return;
+   }
+
+   /* We need to know the block size of the directory in order to get
+    * the needed size of getdents(2) buffer. */
+   if ((ret = VG_(fstat)(sr_Res(f), &st)) != 0) {
+      init_preopened_fds_without_proc_self_fd();
+      return;
+   }
+
+   Char buf[st.blksize];
+   while ((ret = VG_(getdents)(sr_Res(f), (struct vki_dirent *) buf,
+                               sizeof(buf))) > 0) {
+      Int i = 0;
+      while (i < ret) {
+         /* Proceed one entry. */
+         struct vki_dirent *d = (struct vki_dirent *) (buf + i);
+         if (VG_(strcmp)(d->d_name, ".") && VG_(strcmp)(d->d_name, "..")) {
+            HChar *s;
+            Int fno = VG_(strtoll10)(d->d_name, &s);
+            if (*s == '\0') {
+               if (fno != sr_Res(f))
+                  //if (VG_(clo_track_fds))
+                     ML_(record_fd_open_named)(-1, fno);
+            } else {
+               VG_(message)(Vg_DebugMsg,
+                     "Warning: invalid file name in /proc/self/fd: %s\n",
+                     d->d_name);
+            }
+         }
+
+         /* Move on the next entry. */
+         i += d->d_reclen;
+      }
+   }
+
+   VG_(close)(sr_Res(f));
+
 #else
 #  error Unknown OS
 #endif
@@ -1110,7 +1165,9 @@ static void check_cmsg_for_fds(ThreadId tid, struct vki_msghdr *msg)
          Int i;
 
          for (i = 0; i < fdc; i++)
+#if !defined(VGO_netbsd)
             if(VG_(clo_track_fds))
+#endif
                // XXX: must we check the range on these fds with
                //      ML_(fd_allowed)()?
                ML_(record_fd_open_named)(tid, fds[i]);
@@ -1491,10 +1548,14 @@ ML_(generic_POST_sys_socketpair) ( ThreadId tid,
       r = VG_(mk_SysRes_Error)( VKI_EMFILE );
    } else {
       POST_MEM_WRITE( arg3, 2*sizeof(int) );
+#if !defined(VGO_netbsd)
       if (VG_(clo_track_fds)) {
+#endif
          ML_(record_fd_open_nameless)(tid, fd1);
          ML_(record_fd_open_nameless)(tid, fd2);
+#if !defined(VGO_netbsd)
       }
+#endif
    }
    return r;
 }
@@ -1510,7 +1571,9 @@ ML_(generic_POST_sys_socket) ( ThreadId tid, SysRes res )
       VG_(close)(sr_Res(res));
       r = VG_(mk_SysRes_Error)( VKI_EMFILE );
    } else {
+#if !defined(VGO_netbsd)
       if (VG_(clo_track_fds))
+#endif
          ML_(record_fd_open_nameless)(tid, sr_Res(res));
    }
    return r;
@@ -1561,7 +1624,9 @@ ML_(generic_POST_sys_accept) ( ThreadId tid,
       if (addr_p != (Addr)NULL) 
          ML_(buf_and_len_post_check) ( tid, res, addr_p, addrlen_p,
                                        "socketcall.accept(addrlen_out)" );
+#if !defined(VGO_netbsd)
       if (VG_(clo_track_fds))
+#endif
           ML_(record_fd_open_nameless)(tid, sr_Res(res));
    }
    return r;
@@ -2319,10 +2384,10 @@ ML_(generic_PRE_sys_mmap) ( ThreadId tid,
       return VG_(mk_SysRes_Error)( VKI_EINVAL );
    }
 
-   if (!VG_IS_PAGE_ALIGNED(arg1)) {
-      /* zap any misaligned addresses. */
+   if (arg4 & VKI_MAP_FIXED && !VG_IS_PAGE_ALIGNED(arg1)) {
+      /* zap any misaligned addresses if MAP_FIXED is requested. */
       /* SuSV3 says misaligned addresses only cause the MAP_FIXED case
-         to fail.   Here, we catch them all. */
+         to fail. */
       return VG_(mk_SysRes_Error)( VKI_EINVAL );
    }
 
@@ -2708,6 +2773,7 @@ PRE(sys_madvise)
 #if HAVE_MREMAP
 PRE(sys_mremap)
 {
+#  if defined(VGO_linux)
    // Nb: this is different to the glibc version described in the man pages,
    // which lacks the fifth 'new_address' argument.
    if (ARG4 & VKI_MREMAP_FIXED) {
@@ -2729,6 +2795,21 @@ PRE(sys_mremap)
    SET_STATUS_from_SysRes( 
       do_mremap((Addr)ARG1, ARG2, (Addr)ARG5, ARG3, ARG4, tid) 
    );
+
+#  elif defined(VGO_netbsd)
+   PRINT("sys_mremap ( %#lx, %lu, %#lx, %lu, %#lx )",
+         ARG1, ARG2, ARG3, ARG4, ARG5);
+   PRE_REG_READ5(unsigned long, "mremap",
+                 unsigned long, oldp, unsigned long, oldsize,
+                 unsigned long, newp, unsigned long, newsize,
+                 unsigned long, flags);
+   SET_STATUS_from_SysRes(
+      do_mremap((Addr)ARG1, ARG2, (Addr)ARG3, ARG4, ARG5, tid)
+   );
+
+#  else
+#    error "Unknown OS"
+#  endif
 }
 #endif /* HAVE_MREMAP */
 
@@ -2801,7 +2882,7 @@ PRE(sys_sync)
    PRE_REG_READ0(long, "sync");
 }
 
-#if !defined(VGP_nanomips_linux)
+#if !defined(VGP_nanomips_linux) && defined(vki_statfs)
 PRE(sys_fstatfs)
 {
    FUSE_COMPATIBLE_MAY_BLOCK();
@@ -3365,7 +3446,10 @@ PRE(sys_close)
 
 POST(sys_close)
 {
-   if (VG_(clo_track_fds)) ML_(record_fd_close)(ARG1);
+#if !defined(VGO_netbsd)
+   if (VG_(clo_track_fds))
+#endif
+      ML_(record_fd_close)(ARG1);
 }
 
 PRE(sys_dup)
@@ -3381,7 +3465,9 @@ POST(sys_dup)
       VG_(close)(RES);
       SET_STATUS_Failure( VKI_EMFILE );
    } else {
+#if !defined(VGO_netbsd)
       if (VG_(clo_track_fds))
+#endif
          ML_(record_fd_open_named)(tid, RES);
    }
 }
@@ -3397,7 +3483,9 @@ PRE(sys_dup2)
 POST(sys_dup2)
 {
    vg_assert(SUCCESS);
+#if !defined(VGO_netbsd)
    if (VG_(clo_track_fds))
+#endif
       ML_(record_fd_open_named)(tid, RES);
 }
 
@@ -3469,7 +3557,7 @@ PRE(sys_fork)
    // RES is 0 for child, non-0 (the child's PID) for parent.
    is_child = ( RES == 0 ? True : False );
    child_pid = ( is_child ? -1 : RES );
-#elif defined(VGO_darwin)
+#elif defined(VGO_darwin) || defined(VGO_netbsd)
    // RES is the child's pid.  RESHI is 1 for child, 0 for parent.
    is_child = RESHI;
    child_pid = RES;
@@ -4207,7 +4295,7 @@ PRE(sys_open)
    }
    PRE_MEM_RASCIIZ( "open(filename)", ARG1 );
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
    /* Handle the case where the open is of /proc/self/cmdline or
       /proc/<pid>/cmdline, and just give it a copy of the fd for the
       fake file we cooked up at startup (in m_main).  Also, seek the
@@ -4231,12 +4319,13 @@ PRE(sys_open)
       }
    }
 
-   /* Handle also the case of /proc/self/auxv or /proc/<pid>/auxv
-      or /proc/self/exe or /proc/<pid>/exe. */
-   if (ML_(handle_auxv_open)(status, (const HChar *)(Addr)ARG1, ARG2)
-       || ML_(handle_self_exe_open)(status, (const HChar *)(Addr)ARG1, ARG2))
+#  if !defined(VGO_netbsd)
+   /* Handle also the case of /proc/self/auxv or /proc/<pid>/auxv. */
+   if (ML_(handle_auxv_open)(status, (const HChar *)ARG1, ARG2))
+      || ML_(handle_self_exe_open)(status, (const HChar *)(Addr)ARG1, ARG2))
       return;
-#endif // defined(VGO_linux)
+#  endif
+#endif // defined(VGO_linux) || defined(VGO_netbsd)
 
    /* Otherwise handle normally */
    *flags |= SfMayBlock;
@@ -4249,7 +4338,13 @@ POST(sys_open)
       VG_(close)(RES);
       SET_STATUS_Failure( VKI_EMFILE );
    } else {
+#if !defined(VGO_netbsd)
+      /* Always track them on NetBSD because doing so is the only way
+       * to resolve file name from fd on this platform. This means if
+       * you disable it V will load no debug info and thus you won't
+       * get any symbol names nor redirections. */
       if (VG_(clo_track_fds))
+#endif
          ML_(record_fd_open_with_given_name)(tid, RES, (HChar*)(Addr)ARG1);
    }
 }
@@ -4315,7 +4410,9 @@ POST(sys_creat)
       VG_(close)(RES);
       SET_STATUS_Failure( VKI_EMFILE );
    } else {
+#if !defined(VGO_netbsd)
       if (VG_(clo_track_fds))
+#endif
          ML_(record_fd_open_with_given_name)(tid, RES, (HChar*)(Addr)ARG1);
    }
 }
@@ -4372,8 +4469,8 @@ PRE(sys_readlink)
 
 
    {
-#if defined(VGO_linux) || defined(VGO_solaris)
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_netbsd)
+#if defined(VGO_linux) || defined(VGO_netbsd)
 #define PID_EXEPATH  "/proc/%d/exe"
 #define SELF_EXEPATH "/proc/self/exe"
 #define SELF_EXEFD   "/proc/self/fd/%d"
@@ -4623,7 +4720,7 @@ POST(sys_newstat)
 }
 #endif
 
-#if !defined(VGP_nanomips_linux)
+#if !defined(VGP_nanomips_linux) && defined(vki_statfs)
 PRE(sys_statfs)
 {
    FUSE_COMPATIBLE_MAY_BLOCK();
@@ -4867,7 +4964,7 @@ PRE(sys_sethostname)
 #undef PRE
 #undef POST
 
-#endif // defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd)
+#endif // defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_netbsd)
 
 /*--------------------------------------------------------------------*/
 /*--- end                                                          ---*/

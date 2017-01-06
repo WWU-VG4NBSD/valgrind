@@ -26,7 +26,7 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd)
+#if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_netbsd)
 
 #include "pub_core_basics.h"
 #include "pub_core_vki.h"
@@ -76,6 +76,7 @@ struct elfinfo
    ESZ(Ehdr)    e;
    ESZ(Phdr)    *p;
    Int          fd;
+   HChar        *fn;
 };
 
 #if defined(VGO_linux)
@@ -336,6 +337,7 @@ struct elfinfo *readelf(Int fd, const HChar *filename)
    Int phsz;
 
    e->fd = fd;
+   e->fn = VG_(strdup)("ume.re.1", filename);
 
    sres = VG_(pread)(fd, &e->e, sizeof(e->e), 0);
    if (sr_isError(sres) || sr_Res(sres) != sizeof(e->e)) {
@@ -387,6 +389,7 @@ struct elfinfo *readelf(Int fd, const HChar *filename)
    return e;
 
   bad:
+   VG_(free)(e->fn);
    VG_(free)(e);
    return NULL;
 }
@@ -445,11 +448,12 @@ ESZ(Addr) mapelf(struct elfinfo *e, ESZ(Addr) base)
       // The condition handles the case of a zero-length segment.
       if (VG_PGROUNDUP(bss)-VG_PGROUNDDN(addr) > 0) {
          if (0) VG_(debugLog)(0,"ume","mmap_file_fixed_client #1\n");
-         res = VG_(am_mmap_file_fixed_client)(
+         res = VG_(am_mmap_named_file_fixed_client)(
                   VG_PGROUNDDN(addr),
                   VG_PGROUNDUP(bss)-VG_PGROUNDDN(addr),
                   prot, /*VKI_MAP_FIXED|VKI_MAP_PRIVATE, */
-                  e->fd, VG_PGROUNDDN(off)
+                  e->fd, VG_PGROUNDDN(off),
+                  e->fn
                );
          if (0) VG_(am_show_nsegments)(0,"after #1");
          check_mmap(res, VG_PGROUNDDN(addr),
@@ -872,13 +876,14 @@ Int VG_(load_ELF)(Int fd, const HChar* name, /*MOD*/ExeInfo* info)
    info->init_ip  = (Addr)entry;
    info->init_toc = 0; /* meaningless on this platform */
 #endif
+   VG_(free)(e->fn);
    VG_(free)(e->p);
    VG_(free)(e);
 
    return 0;
 }
 
-#endif // defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd)
+#endif // defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_netbsd)
 
 /*--------------------------------------------------------------------*/
 /*--- end                                                          ---*/

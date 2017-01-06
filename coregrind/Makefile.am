@@ -54,6 +54,11 @@ valgrind_SOURCES = \
 	launcher-freebsd.c \
 	m_debuglog.c
 endif
+if VGCONF_OS_IS_NETBSD
+valgrind_SOURCES = \
+	launcher-linux.c \
+	m_debuglog.c
+endif
 
 # for valgrind coregrind building, use the LTO versions, in case they differ from non lto versions
 AR = ${LTO_AR}
@@ -101,6 +106,12 @@ if VGCONF_OS_IS_FREEBSD
 # As with Darwin, we don't have ptrace PTRACE_PEEKTEXT
 # so we can't use vgdb-invoker-ptrace.c
 # Need to find an alternative, like Solaris
+vgdb_SOURCES += vgdb-invoker-none.c
+endif
+if VGCONF_OS_IS_NETBSD
+# Some NetBSD specific stuff is needed as the ptrace(2) interface is
+# not the same. Till we find someone courageous having access to
+# NetBSD, 'none' implementation is used.
 vgdb_SOURCES += vgdb-invoker-none.c
 endif
 
@@ -290,6 +301,7 @@ noinst_HEADERS = \
 	m_syswrap/priv_syswrap-freebsd.h \
 	m_syswrap/priv_syswrap-darwin.h \
 	m_syswrap/priv_syswrap-solaris.h \
+	m_syswrap/priv_syswrap-netbsd.h \
 	m_syswrap/priv_syswrap-main.h \
 	m_syswrap/priv_syswrap-xen.h \
 	m_ume/priv_ume.h \
@@ -357,6 +369,7 @@ COREGRIND_SOURCES_COMMON = \
 	m_aspacemgr/aspacemgr-segnames.c \
 	m_coredump/coredump-elf.c \
 	m_coredump/coredump-macho.c \
+	m_coredump/coredump-netbsd.c \
 	m_coredump/coredump-solaris.c \
 	m_debuginfo/misc.c \
 	m_debuginfo/d3basics.c \
@@ -396,6 +409,7 @@ COREGRIND_SOURCES_COMMON = \
 	m_dispatch/dispatch-amd64-darwin.S \
 	m_dispatch/dispatch-x86-solaris.S \
 	m_dispatch/dispatch-amd64-solaris.S \
+	m_dispatch/dispatch-amd64-netbsd.S \
 	m_gdbserver/inferiors.c \
 	m_gdbserver/m_gdbserver.c \
 	m_gdbserver/regcache.c \
@@ -419,6 +433,8 @@ COREGRIND_SOURCES_COMMON = \
 	m_initimg/initimg-freebsd.c \
 	m_initimg/initimg-darwin.c \
 	m_initimg/initimg-solaris.c \
+	m_initimg/initimg-netbsd.c \
+	m_initimg/initimg-pathscan.c \
 	m_mach/mach_basics.c \
 	m_mach/mach_msg.c \
 	m_mach/mach_traps-x86-darwin.S \
@@ -444,6 +460,7 @@ COREGRIND_SOURCES_COMMON = \
 	m_sigframe/sigframe-x86-darwin.c \
 	m_sigframe/sigframe-amd64-darwin.c \
 	m_sigframe/sigframe-solaris.c \
+	m_sigframe/sigframe-netbsd.c \
 	m_syswrap/syscall-x86-linux.S \
 	m_syswrap/syscall-amd64-linux.S \
 	m_syswrap/syscall-ppc32-linux.S \
@@ -461,6 +478,7 @@ COREGRIND_SOURCES_COMMON = \
 	m_syswrap/syscall-amd64-darwin.S \
 	m_syswrap/syscall-x86-solaris.S \
 	m_syswrap/syscall-amd64-solaris.S \
+	m_syswrap/syscall-amd64-netbsd.S \
 	m_syswrap/syswrap-main.c \
 	m_syswrap/syswrap-generic.c \
 	m_syswrap/syswrap-linux.c \
@@ -468,6 +486,7 @@ COREGRIND_SOURCES_COMMON = \
 	m_syswrap/syswrap-freebsd.c \
 	m_syswrap/syswrap-darwin.c \
 	m_syswrap/syswrap-solaris.c \
+	m_syswrap/syswrap-netbsd.c \
 	m_syswrap/syswrap-x86-linux.c \
 	m_syswrap/syswrap-amd64-linux.c \
 	m_syswrap/syswrap-ppc32-linux.c \
@@ -485,6 +504,7 @@ COREGRIND_SOURCES_COMMON = \
 	m_syswrap/syswrap-xen.c \
 	m_syswrap/syswrap-x86-solaris.c \
 	m_syswrap/syswrap-amd64-solaris.c \
+	m_syswrap/syswrap-amd64-netbsd.c \
 	m_ume/elf.c \
 	m_ume/macho.c \
 	m_ume/main.c \
@@ -589,6 +609,30 @@ libgcc_sup_@VGCONF_ARCH_SEC@_@VGCONF_OS@_a_CPPFLAGS = \
 libgcc_sup_@VGCONF_ARCH_SEC@_@VGCONF_OS@_a_CFLAGS = \
 	$(AM_CFLAGS_PSO_@VGCONF_PLATFORM_SEC_CAPS@)
 endif
+
+#----------------------------------------------------------------------------
+# libcoregrind-sysident-<platform>.a
+# Used for NetBSD support
+#----------------------------------------------------------------------------
+
+pkglib_LIBRARIES += libcoregrind-sysident-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
+if VGCONF_HAVE_PLATFORM_SEC
+pkglib_LIBRARIES += libcoregrind-sysident-@VGCONF_ARCH_SEC@-@VGCONF_OS@.a
+endif
+
+libcoregrind_sysident_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_SOURCES = m_sysident.S
+libcoregrind_sysident_@VGCONF_ARCH_SEC@_@VGCONF_OS@_a_SOURCES = m_sysident.S
+
+libcoregrind_sysident_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS = \
+    $(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+libcoregrind_sysident_@VGCONF_ARCH_SEC@_@VGCONF_OS@_a_CPPFLAGS = \
+    $(AM_CPPFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
+
+libcoregrind_sysident_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CCASFLAGS = \
+    $(AM_CCASFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+libcoregrind_sysident_@VGCONF_ARCH_SEC@_@VGCONF_OS@_a_CCASFLAGS = \
+    $(AM_CCASFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
+
 
 #----------------------------------------------------------------------------
 # libreplacemalloc_toolpreload-<platform>.a

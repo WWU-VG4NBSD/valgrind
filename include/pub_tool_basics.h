@@ -98,11 +98,14 @@ typedef  Word                 PtrdiffT;   // 32             64
 // - off_t is "used for file sizes".
 // At one point we were using it for memory offsets, but PtrdiffT should be
 // used in those cases.
-// Nb: on Linux, off_t is a signed word-sized int.  On Darwin it's
-// always a signed 64-bit int.  So we defined our own Off64T as well.
+// Nb: on Linux, off_t is a signed word-sized int.  On Darwin and
+// NetBSD it's always a signed 64-bit int.  So we defined our own
+// Off64T as well.
 #if defined(VGO_linux) || defined(VGO_solaris)
 typedef Word                   OffT;      // 32             64
 #elif defined(VGO_freebsd)
+typedef Long                   OffT;      // 64             64
+#elif defined(VGO_netbsd)
 typedef Long                   OffT;      // 64             64
 #elif defined(VGO_darwin)
 typedef Long                   OffT;      // 64             64
@@ -192,6 +195,12 @@ typedef void  (*Free_Fn_t)        ( void* p );
          _val and _val2 hold the return value.
       When _isError == True,
          _val holds the error code.
+
+   NetBSD:
+      When _isError == False,
+         _val and _val2 hold the return value.
+      When _isError == True,
+         _val holds the error code.
 */
 #if defined(VGP_mips32_linux) || defined(VGP_mips64_linux)
 typedef
@@ -242,6 +251,15 @@ typedef
    SysRes;
 
 #elif defined(VGO_solaris)
+typedef
+   struct {
+      UWord _val;
+      UWord _val2;
+      Bool  _isError;
+   }
+   SysRes;
+
+#elif defined(VGO_netbsd)
 typedef
    struct {
       UWord _val;
@@ -421,6 +439,27 @@ static inline Bool sr_EQ ( UInt sysno, SysRes sr1, SysRes sr2 ) {
    return sr1._val == sr2._val
        && sr1._isError == sr2._isError
        && (!sr1._isError) ? (sr1._val2 == sr2._val2) : True;
+}
+
+#elif defined(VGO_netbsd)
+
+static inline Bool sr_isError ( SysRes sr ) {
+   return sr._isError;
+}
+static inline UWord sr_Res ( SysRes sr ) {
+   return sr._isError ? 0 : sr._val;
+}
+static inline UWord sr_ResHI ( SysRes sr ) {
+   return sr._isError ? 0 : sr._val2;
+}
+static inline UWord sr_Err ( SysRes sr ) {
+   return sr._isError ? sr._val : 0;
+}
+static inline Bool sr_EQ ( UInt sysno, SysRes sr1, SysRes sr2 ) {
+   /* sysno is ignored for NetBSD */
+   return sr1._val == sr2._val
+       && sr1._val2 == sr2._val2
+       && sr1._isError == sr2._isError;
 }
 
 #else

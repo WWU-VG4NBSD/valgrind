@@ -509,6 +509,10 @@ if HAVE_SWAPCONTEXT
 check_PROGRAMS += swapcontext
 endif
 
+if HAVE_PTHREAD_MUTEXATTR_SETPSHARED
+check_PROGRAMS += pth_process_shared_mutex
+endif
+
 if !VGCONF_OS_IS_DARWIN
 check_PROGRAMS += sem_wait
 endif

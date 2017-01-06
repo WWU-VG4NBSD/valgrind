@@ -1749,6 +1749,11 @@ Bool VG_(translate) ( ThreadId tid,
         || /* we autodetected that it is necessary */
            vex_archinfo.arm64_requires_fallback_LLSC;
 #  endif
+#  if defined(VGP_amd64_netbsd)
+   /* Both are constant zero. */
+   vex_abiinfo.guest_amd64_assume_fs_is_const = True;
+   vex_abiinfo.guest_amd64_assume_gs_is_const = True;
+#  endif
 
    /* Set up closure args. */
    closure.tid    = tid;

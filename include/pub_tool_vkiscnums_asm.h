@@ -83,6 +83,9 @@
 #elif defined(VGP_x86_solaris) || (VGP_amd64_solaris)
 #  include "vki/vki-scnums-solaris.h"
 
+#elif defined(VGO_netbsd)
+#  include "vki/vki-scnums-netbsd.h"
+
 #else
 #  error Unknown platform
 #endif

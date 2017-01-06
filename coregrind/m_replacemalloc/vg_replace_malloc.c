@@ -375,7 +375,7 @@ extern int *__errno_location (void) __attribute__((weak));
 // that can be replaced using --soname-synonyms.
 
 // malloc
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  ALLOC_or_NULL(VG_Z_LIBSTDCXX_SONAME, malloc,      malloc);
  ALLOC_or_NULL(VG_Z_LIBC_SONAME,      malloc,      malloc);
  ALLOC_or_NULL(SO_SYN_MALLOC,         malloc,      malloc);
@@ -401,7 +401,7 @@ extern int *__errno_location (void) __attribute__((weak));
 
 /*---------------------- new ----------------------*/
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  // operator new(unsigned int), not mangled (for gcc 2.96)
  ALLOC_or_BOMB(VG_Z_LIBSTDCXX_SONAME,  builtin_new,    __builtin_new);
  ALLOC_or_BOMB(VG_Z_LIBC_SONAME,       builtin_new,    __builtin_new);
@@ -514,7 +514,7 @@ extern int *__errno_location (void) __attribute__((weak));
 
 /*---------------------- new nothrow ----------------------*/
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  // operator new(unsigned, std::nothrow_t const&), GNU mangling
  #if VG_WORDSIZE == 4
   ALLOC_or_NULL(VG_Z_LIBSTDCXX_SONAME, _ZnwjRKSt9nothrow_t,  __builtin_new);
@@ -621,7 +621,7 @@ extern int *__errno_location (void) __attribute__((weak));
 
 /*---------------------- new [] ----------------------*/
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  // operator new[](unsigned int), not mangled (for gcc 2.96)
  ALLOC_or_BOMB(VG_Z_LIBSTDCXX_SONAME,  __builtin_vec_new, __builtin_vec_new );
  ALLOC_or_BOMB(VG_Z_LIBC_SONAME,       __builtin_vec_new, __builtin_vec_new );
@@ -731,7 +731,7 @@ extern int *__errno_location (void) __attribute__((weak));
 
 /*---------------------- new [] nothrow ----------------------*/
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  // operator new[](unsigned, std::nothrow_t const&), GNU mangling
  #if VG_WORDSIZE == 4
   ALLOC_or_NULL(VG_Z_LIBSTDCXX_SONAME, _ZnajRKSt9nothrow_t, __builtin_vec_new );
@@ -866,7 +866,7 @@ extern int *__errno_location (void) __attribute__((weak));
    }
 
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  FREE(VG_Z_LIBSTDCXX_SONAME,  free,                 free );
  FREE(VG_Z_LIBC_SONAME,       free,                 free );
  FREE(SO_SYN_MALLOC,          free,                 free );
@@ -892,7 +892,7 @@ extern int *__errno_location (void) __attribute__((weak));
 /*---------------------- cfree ----------------------*/
 
 // cfree
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  FREE(VG_Z_LIBSTDCXX_SONAME,  cfree,                free );
  FREE(VG_Z_LIBC_SONAME,       cfree,                free );
  FREE(SO_SYN_MALLOC,          cfree,                free );
@@ -912,7 +912,7 @@ extern int *__errno_location (void) __attribute__((weak));
 
 /*---------------------- delete ----------------------*/
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  // operator delete(void*), not mangled (for gcc 2.96)
  FREE(VG_Z_LIBSTDCXX_SONAME,   __builtin_delete,     __builtin_delete );
  FREE(VG_Z_LIBC_SONAME,        __builtin_delete,     __builtin_delete );
@@ -1036,7 +1036,7 @@ extern int *__errno_location (void) __attribute__((weak));
 
 /*---------------------- delete nothrow ----------------------*/
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  // operator delete(void*, std::nothrow_t const&), GNU mangling
  FREE(VG_Z_LIBSTDCXX_SONAME, _ZdlPvRKSt9nothrow_t,  __builtin_delete );
  FREE(VG_Z_LIBCXX_SONAME,    _ZdlPvRKSt9nothrow_t,  __builtin_delete );
@@ -1092,7 +1092,7 @@ extern int *__errno_location (void) __attribute__((weak));
 
 /*---------------------- delete [] ----------------------*/
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  // operator delete[](void*), not mangled (for gcc 2.96)
  FREE(VG_Z_LIBSTDCXX_SONAME,   __builtin_vec_delete, __builtin_vec_delete );
  FREE(VG_Z_LIBC_SONAME,        __builtin_vec_delete, __builtin_vec_delete );
@@ -1219,7 +1219,7 @@ extern int *__errno_location (void) __attribute__((weak));
 
 /*---------------------- delete [] nothrow ----------------------*/
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  // operator delete[](void*, std::nothrow_t const&), GNU mangling
  FREE(VG_Z_LIBSTDCXX_SONAME,  _ZdaPvRKSt9nothrow_t, __builtin_vec_delete );
  FREE(VG_Z_LIBCXX_SONAME,     _ZdaPvRKSt9nothrow_t, __builtin_vec_delete );
@@ -1323,7 +1323,7 @@ extern int *__errno_location (void) __attribute__((weak));
       return v; \
    }
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  CALLOC(VG_Z_LIBC_SONAME, calloc);
  CALLOC(SO_SYN_MALLOC,    calloc);
 
@@ -1432,7 +1432,7 @@ extern int *__errno_location (void) __attribute__((weak));
       return v; \
    }
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  REALLOC(VG_Z_LIBC_SONAME, realloc);
  REALLOC(SO_SYN_MALLOC,    realloc);
 
@@ -1512,7 +1512,7 @@ extern int *__errno_location (void) __attribute__((weak));
       return v; \
    }
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  MEMALIGN(VG_Z_LIBC_SONAME, memalign);
  MEMALIGN(SO_SYN_MALLOC,    memalign);
 
@@ -1563,7 +1563,7 @@ extern int *__errno_location (void) __attribute__((weak));
                 ((SizeT)pszB, size); \
    }
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  VALLOC(VG_Z_LIBC_SONAME, valloc);
  VALLOC(SO_SYN_MALLOC, valloc);
 
@@ -1684,7 +1684,7 @@ extern int *__errno_location (void) __attribute__((weak));
       return VKI_ENOMEM; \
    }
 
-#if defined(VGO_linux)
+#if defined(VGO_linux) || defined(VGO_netbsd)
  POSIX_MEMALIGN(VG_Z_LIBC_SONAME, posix_memalign);
  POSIX_MEMALIGN(SO_SYN_MALLOC,    posix_memalign);
 

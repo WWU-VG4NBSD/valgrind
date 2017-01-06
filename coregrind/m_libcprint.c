@@ -1197,7 +1197,7 @@ const HChar *VG_(sr_as_string) ( SysRes sr )
    return buf;
 }
 
-#elif defined(VGO_darwin) || defined(VGO_solaris)
+#elif defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_netbsd)
 
 const HChar *VG_(sr_as_string) ( SysRes sr )
 {

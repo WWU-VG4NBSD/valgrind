@@ -53,6 +53,8 @@
 #  include "vki/vki-solaris.h"
 #elif defined(VGO_freebsd)
 #  include "vki/vki-freebsd.h"
+#elif defined(VGO_netbsd)
+#  include "vki/vki-netbsd.h"
 #else
 #  error Unknown Plat/OS
 #endif

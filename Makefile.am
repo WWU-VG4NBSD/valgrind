@@ -51,7 +51,8 @@ SUPP_FILES = \
 	darwin16.supp darwin17.supp \
 	bionic.supp \
 	solaris11.supp solaris12.supp \
-	musl.supp
+	musl.supp \
+	netbsd.supp
 DEFAULT_SUPP_FILES = @DEFAULT_SUPP@
 
 # We include all the base .supp files in the distribution, but not

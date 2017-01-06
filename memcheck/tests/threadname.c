@@ -26,7 +26,9 @@ void* child_fn_2 ( void* arg )
 {
   const char* threadname = "012345678901234";
 
-#  if !defined(VGO_darwin)
+#  if defined(VGO_netbsd)
+  pthread_setname_np(pthread_self(), threadname, NULL);
+#  elif !defined(VGO_darwin)
   pthread_setname_np(pthread_self(), threadname);
 #  else
   pthread_setname_np(threadname);
@@ -42,7 +44,9 @@ void* child_fn_1 ( void* arg )
   const char* threadname = "try1";
   int r;
 
-#  if !defined(VGO_darwin)
+if defined(VGO_netbsd)
+  pthread_setname_np(pthread_self(), threadname, NULL);
+#  elif !defined(VGO_darwin)
   pthread_setname_np(pthread_self(), threadname);
 #  else
   pthread_setname_np(threadname);

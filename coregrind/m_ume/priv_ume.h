@@ -25,7 +25,7 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#if defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd)
+#if defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_netbsd)
 
 #ifndef __PRIV_UME_H
 #define __PRIV_UME_H
@@ -34,7 +34,7 @@
 
 extern Int VG_(do_exec_inner)(const HChar *exe, ExeInfo *info);
 
-#if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd)
+#if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd) || defined(VGO_netbsd)
 extern Bool VG_(match_ELF) ( const void *hdr, SizeT len );
 extern Int  VG_(load_ELF)  ( Int fd, const HChar *name, ExeInfo *info );
 #elif defined(VGO_darwin)
@@ -50,7 +50,7 @@ extern Int  VG_(load_script)  ( Int fd, const HChar *name, ExeInfo *info );
 
 #endif // __PRIV_UME_H
 
-#endif // defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris)
+#endif // defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_solaris) || defined(VGO_netbsd)
 
 /*--------------------------------------------------------------------*/
 /*--- end                                                          ---*/

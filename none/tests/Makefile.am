@@ -278,6 +278,10 @@ endif
 if ! VGCONF_OS_IS_DARWIN
    check_PROGRAMS += ppoll_alarm
 endif
+if ! VGCONF_OS_IS_NETBSD
+   check_PROGRAMS += rlimit64_nofile \
+        ppoll_alarm
+endif
 
 # clang does not know -ansi
 if ! COMPILER_IS_CLANG

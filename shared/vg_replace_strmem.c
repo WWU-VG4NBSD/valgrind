@@ -239,6 +239,12 @@ static inline void my_exit ( int x )
  STRRCHR(VG_Z_LIBC_SONAME,   rindex)
  STRRCHR(VG_Z_LD_SO_1,       strrchr)
 
+#elif defined(VGO_netbsd)
+ STRRCHR(VG_Z_LIBC_SONAME, strrchr)
+ STRRCHR(VG_Z_LIBC_SONAME, rindex)
+ STRRCHR(VG_Z_LD_ELF_SO,   strrchr)
+ STRRCHR(VG_Z_LD_ELF_SO,   rindex)
+
 #endif
 
 
@@ -298,6 +304,12 @@ static inline void my_exit ( int x )
  STRCHR(VG_Z_LIBC_SONAME,          index)
  STRCHR(VG_Z_LD_SO_1,              strchr)
 
+#elif defined(VGO_netbsd)
+ STRCHR(VG_Z_LIBC_SONAME, strchr)
+ STRCHR(VG_Z_LIBC_SONAME, index)
+ STRCHR(VG_Z_LD_ELF_SO,   strchr)
+ STRCHR(VG_Z_LD_ELF_SO,   index)
+
 #endif
 
 
@@ -342,6 +354,9 @@ static inline void my_exit ( int x )
  STRCAT(VG_Z_LIBC_SONAME, strcat)
  STRCAT(VG_Z_LD_SO_1,     strcat)
 
+#elif defined(VGO_netbsd)
+ STRCAT(VG_Z_LIBC_SONAME, strcat)
+
 #endif
 
 
@@ -383,6 +398,9 @@ static inline void my_exit ( int x )
  //STRNCAT(VG_Z_DYLD,        strncat)
 
 #elif defined(VGO_solaris)
+ STRNCAT(VG_Z_LIBC_SONAME, strncat)
+
+#elif defined(VGO_netbsd)
  STRNCAT(VG_Z_LIBC_SONAME, strncat)
 
 #endif
@@ -441,6 +459,9 @@ static inline void my_exit ( int x )
 #elif defined(VGO_solaris)
  STRLCAT(VG_Z_LIBC_SONAME, strlcat)
 
+#elif defined(VGO_netbsd)
+ STRLCAT(VG_Z_LIBC_SONAME, strlcat)
+
 #endif
 
 
@@ -467,6 +488,9 @@ static inline void my_exit ( int x )
 # endif
 
 #elif defined(VGO_solaris)
+ STRNLEN(VG_Z_LIBC_SONAME, strnlen)
+
+#elif defined(VGO_netbsd)
  STRNLEN(VG_Z_LIBC_SONAME, strnlen)
 
 #endif
@@ -519,6 +543,9 @@ static inline void my_exit ( int x )
  STRLEN(VG_Z_LIBC_SONAME,          strlen)
  STRLEN(VG_Z_LD_SO_1,              strlen)
 
+#elif defined(VGO_netbsd)
+ STRLEN(VG_Z_LIBC_SONAME,          strlen)
+
 #endif
 
 
@@ -568,6 +595,10 @@ static inline void my_exit ( int x )
  STRCPY(VG_Z_LIBC_SONAME, strcpy)
  STRCPY(VG_Z_LD_SO_1,     strcpy)
 
+#elif defined(VGO_netbsd)
+ STRCPY(VG_Z_LIBC_SONAME, strcpy)
+ STRCPY(VG_Z_LD_ELF_SO,   strcpy)
+
 #endif
 
 
@@ -615,6 +646,10 @@ static inline void my_exit ( int x )
 #elif defined(VGO_solaris)
  STRNCPY(VG_Z_LIBC_SONAME, strncpy)
  STRNCPY(VG_Z_LD_SO_1,     strncpy)
+
+#elif defined(VGO_netbsd)
+ STRNCPY(VG_Z_LIBC_SONAME, strncpy)
+ STRNCPY(VG_Z_LD_ELF_SO,   strncpy)
 
 #endif
 
@@ -680,6 +715,10 @@ static inline void my_exit ( int x )
 
  STRLCPY(VG_Z_LIBC_SONAME, strlcpy)
 
+#elif defined(VGO_netbsd)
+ #define STRLCPY_CHECK_FOR_DSTSIZE_ZERO
+ STRLCPY(VG_Z_LIBC_SONAME, strlcpy)
+
 #endif
 
 
@@ -723,6 +762,9 @@ static inline void my_exit ( int x )
 # endif
 
 #elif defined(VGO_solaris)
+ STRNCMP(VG_Z_LIBC_SONAME, strncmp)
+
+#elif defined(VGO_netbsd)
  STRNCMP(VG_Z_LIBC_SONAME, strncmp)
 
 #endif
@@ -769,6 +811,9 @@ static inline void my_exit ( int x )
  //STRCASECMP(VG_Z_LIBC_SONAME, strcasecmp)
 
 #elif defined(VGO_solaris)
+ STRCASECMP(VG_Z_LIBC_SONAME, strcasecmp)
+
+#elif defined(VGO_netbsd)
  STRCASECMP(VG_Z_LIBC_SONAME, strcasecmp)
 
 #endif
@@ -820,6 +865,9 @@ static inline void my_exit ( int x )
 #elif defined(VGO_solaris)
  STRNCASECMP(VG_Z_LIBC_SONAME, strncasecmp)
 
+#elif defined(VGO_netbsd)
+ STRNCASECMP(VG_Z_LIBC_SONAME, strncasecmp)
+
 #endif
 
 
@@ -855,6 +903,8 @@ static inline void my_exit ( int x )
  //STRCASECMP_L(VG_Z_LIBC_SONAME, strcasecmp_l)
 
 #elif defined(VGO_solaris)
+
+#elif defined(VGO_netbsd)
 
 #endif
 
@@ -894,6 +944,8 @@ static inline void my_exit ( int x )
  //STRNCASECMP_L(VG_Z_DYLD,        strncasecmp_l)
 
 #elif defined(VGO_solaris)
+
+#elif defined(VGO_netbsd)
 
 #endif
 
@@ -947,6 +999,10 @@ static inline void my_exit ( int x )
  STRCMP(VG_Z_LIBC_SONAME,          strcmp)
  STRCMP(VG_Z_LD_SO_1,              strcmp)
 
+#elif defined(VGO_netbsd)
+ STRCMP(VG_Z_LIBC_SONAME, strcmp)
+ STRCMP(VG_Z_LD_ELF_SO,   strcmp)
+
 #endif
 
 
@@ -986,6 +1042,9 @@ static inline void my_exit ( int x )
 #elif defined(VGO_solaris)
  MEMCHR(VG_Z_LIBC_SONAME, memchr)
 
+#elif defined(VGO_netbsd)
+ MEMCHR(VG_Z_LIBC_SONAME, memchr)
+
 #endif
 
 
@@ -1016,6 +1075,9 @@ static inline void my_exit ( int x )
  //MEMRCHR(VG_Z_DYLD,        memrchr)
 
 #elif defined(VGO_solaris)
+
+#elif defined(VGO_netbsd)
+ MEMRCHR(VG_Z_LIBC_SONAME, memrchr)
 
 #endif
 
@@ -1150,6 +1212,10 @@ static inline void my_exit ( int x )
  MEMCPY(VG_Z_LIBC_SONAME,  memcpyZPZa)
  MEMCPY(VG_Z_LD_SO_1,      memcpy)
 
+#elif defined(VGO_netbsd)
+ MEMCPY(VG_Z_LIBC_SONAME, memcpy)
+ MEMCPY(VG_Z_LD_ELF_SO,   memcpy)
+
 #endif
 
 
@@ -1217,6 +1283,11 @@ static inline void my_exit ( int x )
  MEMCMP(VG_Z_LIBC_SONAME, bcmp)
  MEMCMP(VG_Z_LD_SO_1,     memcmp)
 
+#elif defined(VGO_netbsd)
+ MEMCMP(VG_Z_LIBC_SONAME, memcmp)
+ MEMCMP(VG_Z_LIBC_SONAME, bcmp)
+ MEMCMP(VG_Z_LD_ELF_SO,    bcmp)
+
 #endif
 
 
@@ -1275,6 +1346,9 @@ static inline void my_exit ( int x )
 #elif defined(VGO_solaris)
  STPCPY(VG_Z_LIBC_SONAME,          stpcpy)
 
+#elif defined(VGO_netbsd)
+ STPCPY(VG_Z_LIBC_SONAME, stpcpy)
+
 #endif
 
 
@@ -1305,6 +1379,10 @@ static inline void my_exit ( int x )
 
 #if defined(VGO_linux) || defined(VGO_freebsd)
  STPNCPY(VG_Z_LIBC_SONAME, stpncpy)
+
+#elif defined(VGO_netbsd)
+ STPNCPY(VG_Z_LIBC_SONAME, stpncpy)
+
 #endif
 
 
@@ -1371,6 +1449,10 @@ static inline void my_exit ( int x )
  MEMSET(VG_Z_LIBC_SONAME, memset)
  MEMSET(VG_Z_LIBC_SONAME, memsetZPZa)
 
+#elif defined(VGO_netbsd)
+ MEMSET(VG_Z_LIBC_SONAME, memset)
+ MEMSET(VG_Z_LD_ELF_SO,   memset)
+
 #endif
 
 
@@ -1406,6 +1488,9 @@ static inline void my_exit ( int x )
  MEMMOVE(VG_Z_LIBC_SONAME, memmove)
  MEMMOVE(VG_Z_LIBC_SONAME, memmoveZPZa)
  MEMMOVE(VG_Z_LD_SO_1,     memmove)
+
+#elif defined(VGO_netbsd)
+ MEMMOVE(VG_Z_LIBC_SONAME, memmove)
 
 #endif
 
@@ -1446,6 +1531,9 @@ static inline void my_exit ( int x )
  //BCOPY(VG_Z_DYLD,        bcopy)
 
 #elif defined(VGO_darwin)
+ BCOPY(VG_Z_LIBC_SONAME, bcopy)
+
+#elif defined(VGO_netbsd)
  BCOPY(VG_Z_LIBC_SONAME, bcopy)
 
 #endif
@@ -1492,6 +1580,8 @@ static inline void my_exit ( int x )
 #elif defined(VGO_darwin)
 
 #elif defined(VGO_solaris)
+
+#elif defined(VGO_netbsd)
 
 #endif
 
@@ -1552,6 +1642,8 @@ static inline void my_exit ( int x )
 
 #elif defined(VGO_solaris)
 
+#elif defined(VGO_netbsd)
+
 #endif
 
 
@@ -1590,6 +1682,8 @@ static inline void my_exit ( int x )
 
 #elif defined(VGO_solaris)
 
+#elif defined(VGO_netbsd)
+
 #endif
 
 
@@ -1626,6 +1720,8 @@ static inline void my_exit ( int x )
 #elif defined(VGO_darwin)
 
 #elif defined(VGO_solaris)
+
+#elif defined(VGO_netbsd)
 
 #endif
 
@@ -1676,6 +1772,8 @@ static inline void my_exit ( int x )
 
 #elif defined(VGO_solaris)
 
+#elif defined(VGO_netbsd)
+
 #endif
 
 
@@ -1725,6 +1823,8 @@ static inline void my_exit ( int x )
 #elif defined(VGO_darwin)
 
 #elif defined(VGO_solaris)
+
+#elif defined(VGO_netbsd)
 
 #endif
 
@@ -1781,6 +1881,9 @@ static inline void my_exit ( int x )
 #elif defined(VGO_solaris)
  STRSTR(VG_Z_LIBC_SONAME,          strstr)
 
+#elif defined(VGO_netbsd)
+ STRSTR(VG_Z_LIBC_SONAME, strstr)
+
 #endif
 
 
@@ -1828,6 +1931,9 @@ static inline void my_exit ( int x )
 
 #elif defined(VGO_solaris)
  STRPBRK(VG_Z_LIBC_SONAME,          strpbrk)
+
+#elif defined(VGO_netbsd)
+ STRPBRK(VG_Z_LIBC_SONAME, strpbrk)
 
 #endif
 
@@ -1879,6 +1985,9 @@ static inline void my_exit ( int x )
 #elif defined(VGO_solaris)
  STRCSPN(VG_Z_LIBC_SONAME,          strcspn)
 
+#elif defined(VGO_netbsd)
+ STRCSPN(VG_Z_LIBC_SONAME, strcspn)
+
 #endif
 
 
@@ -1928,6 +2037,9 @@ static inline void my_exit ( int x )
 
 #elif defined(VGO_solaris)
  STRSPN(VG_Z_LIBC_SONAME,          strspn)
+
+#elif defined(VGO_netbsd)
+ STRSPN(VG_Z_LIBC_SONAME, strspn)
 
 #endif
 
@@ -1988,6 +2100,9 @@ static inline void my_exit ( int x )
 #elif defined(VGO_solaris)
   STRCASESTR(VG_Z_LIBC_SONAME,      strcasestr)
 
+#elif defined(VGO_netbsd)
+  STRCASESTR(VG_Z_LIBC_SONAME, strcasestr)
+
 #endif
 
 
@@ -2009,7 +2124,7 @@ static inline void my_exit ( int x )
       return i; \
    }
 
-#if defined(VGO_linux) || defined(VGO_freebsd) || defined(VGO_solaris)
+#if defined(VGO_linux) || defined(VGO_freebsd) || defined(VGO_solaris) || defined(VGO_netbsd)
  WCSLEN(VG_Z_LIBC_SONAME,          wcslen)
 
 #endif
@@ -2065,6 +2180,10 @@ static inline void my_exit ( int x )
 
 #if defined(VGO_linux) || defined(VGO_freebsd)
  WCSCMP(VG_Z_LIBC_SONAME,          wcscmp)
+
+#elif defined(VGO_netbsd)
+ WCSCMP(VG_Z_LIBC_SONAME, wcscmp)
+
 #endif
 
 /*---------------------- wcsncmp ----------------------*/
@@ -2132,6 +2251,10 @@ static inline void my_exit ( int x )
 
 #if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd)
  WCSCPY(VG_Z_LIBC_SONAME, wcscpy)
+
+#elif defined(VGO_netbsd)
+ WCSCPY(VG_Z_LIBC_SONAME, wcscpy)
+
 #endif
 
 
@@ -2155,6 +2278,10 @@ static inline void my_exit ( int x )
 
 #if defined(VGO_linux)  || defined(VGO_freebsd)
  WCSCHR(VG_Z_LIBC_SONAME,          wcschr)
+
+#elif defined(VGO_netbsd)
+ WCSCHR(VG_Z_LIBC_SONAME, wcschr)
+
 #endif
 /*---------------------- wcsrchr ----------------------*/
 
@@ -2177,6 +2304,10 @@ static inline void my_exit ( int x )
 
 #if defined(VGO_linux) || defined(VGO_freebsd)
  WCSRCHR(VG_Z_LIBC_SONAME, wcsrchr)
+
+#elif defined(VGO_netbsd)
+ WCSRCHR(VG_Z_LIBC_SONAME, wcsrchr)
+
 #endif
 
  /*---------------------- wmemchr ----------------------*/
