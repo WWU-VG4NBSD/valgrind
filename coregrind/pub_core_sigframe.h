@@ -54,7 +54,13 @@ void VG_(sigframe_create) ( ThreadId tid,
                             void *handler, 
                             UInt flags,
                             const vki_sigset_t *mask,
-                            void *restorer );
+#if defined(VGO_netbsd)
+                            void *trampoline,
+                            UInt tramp_abi
+#else
+                            void *restorer
+#endif
+                          );
 
 /* Remove a signal frame from thread 'tid's stack, and 
    restore the CPU state from it. */

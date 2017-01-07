@@ -38,7 +38,13 @@
  */
 #if defined(VGO_solaris) || (defined(VGO_freebsd) && (FREEBSD_VERS >= FREEBSD_12_2))
 #  define BUS_ERROR_SI_CODE  BUS_OBJERR
+#  define BUS_ERROR_SIGNAL   SIGBUS
+#elif defined(VGO_netbsd)
+/* However on NetBSD it results in SIGSEGV instead. */
+#  define BUS_ERROR_SIGNAL   SIGSEGV
+#  define BUS_ERROR_SI_CODE  SEGV_MAPERR
 #else
+#  define BUS_ERROR_SIGNAL   SIGBUS
 #  define BUS_ERROR_SI_CODE  BUS_ADRERR
 #endif
 
@@ -170,7 +176,7 @@ int main()
 #if defined(VGO_freebsd) && (FREEBSD_VERS < FREEBSD_12_2)
 			T(3, SIGSEGV,	BUS_ERROR_SI_CODE, &mapping[FILESIZE+10]),
 #else
-			T(3, SIGBUS,	BUS_ERROR_SI_CODE, &mapping[FILESIZE+10]),
+			T(3, BUS_ERROR_SIGNAL,	BUS_ERROR_SI_CODE,	&mapping[FILESIZE+10]),
 #endif
 			T(4, SIGFPE,    DIVISION_BY_ZERO_SI_CODE, 0),
 #undef T
