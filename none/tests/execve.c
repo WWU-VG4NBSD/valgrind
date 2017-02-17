@@ -20,6 +20,10 @@ int main(int argc, char **argv)
       const char *exe = "/usr/bin/true";
 #elif defined(VGO_freebsd)
       const char *exe = "/usr/bin/true";
+#elif defined(VGO_netbsd)
+      // NetBSD requires non-NULL argv parameter
+      char *const argv_exe[] = {"true", NULL};
+      if (execve("/usr/bin/true", argv_exe, NULL) < 0)
 #else
       const char *exe = "/bin/true";
 #endif
