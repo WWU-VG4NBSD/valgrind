@@ -92,7 +92,7 @@ EXTRA_DIST = \
 	allexec64.stdout.exp allexec64.stderr.exp allexec64.vgtest\
 	ansi.stderr.exp ansi.vgtest \
 	args.stderr.exp args.stdout.exp args.vgtest \
-	async-sigs.stderr.exp async-sigs.stderr.exp-mips32 \
+	async-sigs.stderr.exp async-sigs.stderr.exp-mips32 async-sigs.stderr.exp-netbsd \
 	async-sigs.vgtest async-sigs.stderr.exp-freebsd \
 	bigcode.vgtest bigcode.stderr.exp bigcode.stdout.exp \
 	bitfield1.stderr.exp bitfield1.vgtest \
