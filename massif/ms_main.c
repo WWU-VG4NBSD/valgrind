@@ -1515,8 +1515,11 @@ void ms_new_mem_startup( Addr a, SizeT len,
    // startup maps are always be page-sized, except the trampoline page is
    // marked by the core as only being the size of the trampoline itself,
    // which is something like 57 bytes.  Round it up to page size.
-   len = VG_PGROUNDUP(len);
-   ms_record_page_mem(a, len);
+   if (len > 0) {
+      // Trampolines can even be missing on some platforms.
+      len = VG_PGROUNDUP(len);
+      ms_record_page_mem(a, len);
+   }
 }
 
 static
@@ -1986,7 +1989,6 @@ static void ms_fini(Int exit_status)
 static void ms_post_clo_init(void)
 {
    Int i;
-   HChar* LD_PRELOAD_val;
 
    /* We will record execontext up to clo_depth + overestimate and
       we will store this as ec => we need to increase the backtrace size
@@ -2007,10 +2009,11 @@ static void ms_post_clo_init(void)
 
    // If --pages-as-heap=yes we don't want malloc replacement to occur.  So we
    // disable vgpreload_massif-$PLATFORM.so by removing it from LD_PRELOAD (or
-   // platform-equivalent). This is a bit of a hack, but LD_PRELOAD is setup
+   // platform-equivalent).  This is a bit of a hack, but LD_PRELOAD is setup
    // well before tool initialisation, so this seems the best way to do it.
    if (clo_pages_as_heap) {
-      HChar* s1;
+      HChar* LD_PRELOAD_val;
+      HChar* s;
       HChar* s2;
 
       clo_heap_admin = 0;     // No heap admin on pages.
@@ -2018,31 +2021,28 @@ static void ms_post_clo_init(void)
       LD_PRELOAD_val = VG_(getenv)( VG_(LD_PRELOAD_var_name) );
       tl_assert(LD_PRELOAD_val);
 
-      VERB(2, "clo_pages_as_heap orig LD_PRELOAD '%s'\n", LD_PRELOAD_val);
+      VERB(1, "original %s: %s\n", VG_(LD_PRELOAD_var_name), LD_PRELOAD_val);
 
       // Make sure the vgpreload_core-$PLATFORM entry is there, for sanity.
-      s1 = VG_(strstr)(LD_PRELOAD_val, "vgpreload_core");
-      tl_assert(s1);
+      s = VG_(strstr)(LD_PRELOAD_val, "vgpreload_core");
+      tl_assert(s);
 
       // Now find the vgpreload_massif-$PLATFORM entry.
-      s1 = VG_(strstr)(LD_PRELOAD_val, "vgpreload_massif");
-      tl_assert(s1);
-      s2 = s1;
+      s = VG_(strstr)(LD_PRELOAD_val, "vgpreload_massif");
+      tl_assert(s);
 
-      // Position s1 on the previous ':', which must be there because
-      // of the preceding vgpreload_core-$PLATFORM entry.
-      for (; *s1 != ':'; s1--)
-         ;
+      // Find out where is the previous ':', which must be there because of
+      // the preceding vgpreload_core-$PLATFORM entry.
+      for (; *s != ':'; s--) ;
 
-      // Position s2 on the next ':' or \0
-      for (; *s2 != ':' && *s2 != '\0'; s2++)
-         ;
+      // Find out where is the end of the entry, which will be '\0' if
+      // LD_PRELOAD was empty before Valgrind started, or ':' otherwise.
+      for (s2 = s + 1; *s2 != ':' && *s2 != '\0'; s2++) ;
 
-      // Move all characters from s2 to s1
-      while ((*s1++ = *s2++))
-         ;
+      // Now slide everything down over the removed entry.
+      VG_(strcpy)(s, s2);
 
-      VERB(2, "clo_pages_as_heap cleaned LD_PRELOAD '%s'\n", LD_PRELOAD_val);
+      VERB(1, "modified %s: %s\n", VG_(LD_PRELOAD_var_name), LD_PRELOAD_val);
    }
 
    // Print alloc-fns and ignore-fns, if necessary.
