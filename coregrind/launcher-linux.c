@@ -298,9 +298,9 @@ static const char *select_platform(const char *clientname)
             }
             else
 #           elif defined(VGO_netbsd)
-            if (ehdr->e_machine == EM_X86_64 &&
-                (ehdr->e_ident[EI_OSABI] == ELFOSABI_SYSV ||
-                 ehdr->e_ident[EI_OSABI] == ELFOSABI_NETBSD)) {
+            if (header.ehdr64.e_machine == EM_X86_64 &&
+                (header.ehdr64.e_ident[EI_OSABI] == ELFOSABI_SYSV ||
+                 header.ehdr64.e_ident[EI_OSABI] == ELFOSABI_NETBSD)) {
                platform = "amd64-netbsd";
             }
             else
