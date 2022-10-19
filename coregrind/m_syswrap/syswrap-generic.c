@@ -1918,6 +1918,16 @@ UInt get_sem_count( Int semid )
 
    return buf.sem_nsems;
 #  endif
+
+/* Temporary return to stop GCC complaining about no return in non-void function
+   will need to add NetBSD specific checks eventually */
+struct vki_semid_ds buf;
+buf.sem_nsems = 0;
+arg.buf = &buf;
+if (sr_isError(res))
+   return 0;
+
+return buf.sem_nsems;
 }
 
 void

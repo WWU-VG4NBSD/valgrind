@@ -434,7 +434,6 @@ COREGRIND_SOURCES_COMMON = \
 	m_initimg/initimg-darwin.c \
 	m_initimg/initimg-solaris.c \
 	m_initimg/initimg-netbsd.c \
-	m_initimg/initimg-pathscan.c \
 	m_mach/mach_basics.c \
 	m_mach/mach_msg.c \
 	m_mach/mach_traps-x86-darwin.S \
