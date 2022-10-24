@@ -1880,6 +1880,13 @@ UInt get_sem_count( Int semid )
    /* Darwin has no specific 64 bit semid_ds, but has __NR_semctl. */
    struct vki_semid_ds buf;
    arg.buf = &buf;
+#  elif defined(VGO_netbsd)
+   /* Assuming NetBSD is the same as Darwin here, but this may not be correct */
+   struct vki_semid_ds buf;
+   arg.buf = &buf;
+   /* Temporary return to stop GCC complaining about no return in non-void function
+   will need to add NetBSD specific checks eventually */
+   buf.sem_nsems = 0;
 #  else
    struct vki_semid64_ds buf;
    arg.buf64 = &buf;
@@ -1918,16 +1925,6 @@ UInt get_sem_count( Int semid )
 
    return buf.sem_nsems;
 #  endif
-
-/* Temporary return to stop GCC complaining about no return in non-void function
-   will need to add NetBSD specific checks eventually */
-struct vki_semid_ds buf;
-buf.sem_nsems = 0;
-arg.buf = &buf;
-if (sr_isError(res))
-   return 0;
-
-return buf.sem_nsems;
 }
 
 void
@@ -4390,10 +4387,14 @@ PRE(sys_open)
 #if defined(HAVE_PROC_SELF_AUXV)
    /* Handle also the case of /proc/self/auxv or /proc/<pid>/auxv. */
    if (ML_(handle_auxv_open)(status, (const HChar *)ARG1, ARG2))
+      return;
+#endif
+#if defined(VGO_linux)
+   /* Handle also the case of /proc/self/auxv or /proc/<pid>/auxv. */
+   if (ML_(handle_auxv_open)(status, (const HChar *)ARG1, ARG2)
       || ML_(handle_self_exe_open)(status, (const HChar *)(Addr)ARG1, ARG2))
       return;
 #endif
-
    /* Otherwise handle normally */
    *flags |= SfMayBlock;
 }
@@ -5440,7 +5441,7 @@ PRE(sys_mq_open)
       /* mqd_t
        * mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
        */
-      PRINT("sys_mq_open ( %#lx(%s), %ld, %ld, %#lx )",
+      PRINT("sys_mq_open ( %#lx(%s), %ld, %ld, %#" FMT_REGWORD "x )",
             ARG1, (HChar*)ARG1, SARG2, ARG3, ARG4);
       PRE_REG_READ4(vki_mqd_t, "mq_open",
                     const char *, name, int, oflag,
