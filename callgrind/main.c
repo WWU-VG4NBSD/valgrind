@@ -1732,6 +1732,9 @@ void collect_time (struct vki_timespec *systime, struct vki_timespec *syscputime
 
 #  elif defined(VGO_darwin)
       tl_assert(0);
+#  elif defined(VGO_netbsd)
+      /* TODO: NetBSD clock */
+      tl_assert(0);
 #  else
 #     error "Unknown OS"
 #  endif
