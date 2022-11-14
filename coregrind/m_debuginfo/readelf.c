@@ -1776,7 +1776,7 @@ static HChar* readlink_path (const HChar *path)
 #if defined(VGP_arm64_linux) || defined(VGP_nanomips_linux)
       res = VG_(do_syscall4)(__NR_readlinkat, VKI_AT_FDCWD,
                                               (UWord)path, (UWord)buf, bufsiz);
-#elif defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_freebsd)
+#elif defined(VGO_linux) || defined(VGO_darwin) || defined(VGO_freebsd) || defined(VGO_netbsd)
       res = VG_(do_syscall3)(__NR_readlink, (UWord)path, (UWord)buf, bufsiz);
 #elif defined(VGO_solaris)
       res = VG_(do_syscall4)(__NR_readlinkat, VKI_AT_FDCWD, (UWord)path,

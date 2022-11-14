@@ -106,9 +106,10 @@ extern Int  VG_(gettimeofday)(struct vki_timeval *tv, struct vki_timezone *tz);
 #  if defined(VGO_linux) || defined(VGO_solaris) || defined(VGO_freebsd)
 /* Get the clock value as specified by clk_id.  Asserts if unsuccesful.  */
 extern void VG_(clock_gettime)(struct vki_timespec *ts, vki_clockid_t clk_id);
-#  elif defined(VGO_darwin)
+#  elif defined(VGO_darwin) || defined(VGO_netbsd)
   /* It seems clock_gettime is only available on recent Darwin versions.
-     For the moment, let's assume it is not available.  */
+     For the moment, let's assume it is not available.  
+     Currently leaving this blank for NetBSD as well */
 #  else
 #    error "Unknown OS"
 #  endif

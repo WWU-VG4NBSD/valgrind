@@ -1880,6 +1880,13 @@ UInt get_sem_count( Int semid )
    /* Darwin has no specific 64 bit semid_ds, but has __NR_semctl. */
    struct vki_semid_ds buf;
    arg.buf = &buf;
+#  elif defined(VGO_netbsd)
+   /* Assuming NetBSD is the same as Darwin here, but this may not be correct */
+   struct vki_semid_ds buf;
+   arg.buf = &buf;
+   /* Temporary return to stop GCC complaining about no return in non-void function
+   will need to add NetBSD specific checks eventually */
+   buf.sem_nsems = 0;
 #  else
    struct vki_semid64_ds buf;
    arg.buf64 = &buf;
@@ -2798,7 +2805,8 @@ PRE(sys_mremap)
    );
 
 #  elif defined(VGO_netbsd)
-   PRINT("sys_mremap ( %#lx, %lu, %#lx, %lu, %#lx )",
+   PRINT("sys_mremap ( %#" FMT_REGWORD "x, %" FMT_REGWORD "u, %#"
+         FMT_REGWORD "x, %" FMT_REGWORD "u, %#" FMT_REGWORD "x )",
          ARG1, ARG2, ARG3, ARG4, ARG5);
    PRE_REG_READ5(unsigned long, "mremap",
                  unsigned long, oldp, unsigned long, oldsize,
@@ -4380,10 +4388,14 @@ PRE(sys_open)
 #if defined(HAVE_PROC_SELF_AUXV)
    /* Handle also the case of /proc/self/auxv or /proc/<pid>/auxv. */
    if (ML_(handle_auxv_open)(status, (const HChar *)ARG1, ARG2))
+      return;
+#endif
+#if defined(VGO_linux)
+   /* Handle also the case of /proc/self/auxv or /proc/<pid>/auxv. */
+   if (ML_(handle_auxv_open)(status, (const HChar *)ARG1, ARG2)
       || ML_(handle_self_exe_open)(status, (const HChar *)(Addr)ARG1, ARG2))
       return;
 #endif
-
    /* Otherwise handle normally */
    *flags |= SfMayBlock;
 }
@@ -4679,7 +4691,8 @@ POST(sys_select)
 PRE(sys_pselect)
 {
    *flags |= SfMayBlock;
-   PRINT("sys_pselect ( %ld, %#lx, %#lx, %#lx, %#lx, %#lx )",
+   PRINT("sys_pselect ( %ld, %#" FMT_REGWORD "x, %#" FMT_REGWORD "x, %#" 
+         FMT_REGWORD "x, %#" FMT_REGWORD "x, %#" FMT_REGWORD "x )",
          SARG1, ARG2, ARG3, ARG4, ARG5, ARG6);
    PRE_REG_READ6(long, "pselect",
                  int, nfds, vki_fd_set *, readfds, vki_fd_set *, writefds,
@@ -5086,7 +5099,8 @@ POST(sys_sigaltstack)
 PRE(sys_sigprocmask)
 {
    /* int sigprocmask(int how, const sigset_t *set, sigset_t *oset); */
-   PRINT("sys_sigprocmask ( %ld, %#lx, %#lx )", SARG1, ARG2, ARG3);
+   PRINT("sys_sigprocmask ( %ld, %#" FMT_REGWORD "x, %#" FMT_REGWORD "x )"
+         , SARG1, ARG2, ARG3);
    PRE_REG_READ3(long, "sigprocmask",
                  int, how, vki_sigset_t *, set, vki_sigset_t *, oset);
    if (ARG2)
@@ -5123,7 +5137,7 @@ PRE(sys_sigsuspend)
    *flags |= SfMayBlock;
 
    /* int sigsuspend(const sigset_t *set); */
-   PRINT("sys_sigsuspend ( %#lx )", ARG1);
+   PRINT("sys_sigsuspend ( %#" FMT_REGWORD "x )", ARG1);
    PRE_REG_READ1(long, "sigsuspend", vki_sigset_t *, set);
    PRE_MEM_READ("sigsuspend(set)", ARG1, sizeof(vki_sigset_t));
 
@@ -5143,7 +5157,8 @@ PRE(sys_sigtimedwait)
    /* int sigtimedwait(const sigset_t *set, siginfo_t *info,
                        const struct timespec *timeout); */
    *flags |= SfMayBlock;
-   PRINT("sys_sigtimedwait ( %#lx, %#lx, %#lx )", ARG1, ARG2, ARG3);
+   PRINT("sys_sigtimedwait ( %#" FMT_REGWORD "x, %#" FMT_REGWORD "x, %#" FMT_REGWORD "x )"
+         , ARG1, ARG2, ARG3);
    PRE_REG_READ3(long, "sigtimedwait", vki_sigset_t *, set,
                  vki_siginfo_t *, info, struct vki_timespec *, timeout);
    PRE_MEM_READ("sigtimewait(set)", ARG1, sizeof(vki_sigset_t));
@@ -5162,7 +5177,7 @@ PRE(sys_clock_gettime)
    /* int
     * clock_gettime(clockid_t clock_id, struct timespec *tp);
     */
-   PRINT("sys_clock_gettime ( %ld, %#lx )", SARG1, ARG2);
+   PRINT("sys_clock_gettime ( %ld, %#" FMT_REGWORD "x )", SARG1, ARG2);
    PRE_REG_READ2(int, "clock_gettime", vki_clockid_t, clock_id, struct vki_timespec *, tp);
    PRE_MEM_WRITE("clock_gettime(tp)", ARG2, sizeof(struct vki_timespec));
 }
@@ -5183,7 +5198,8 @@ PRE(sys_bind)
 {
    /* int
     * bind(int s, const struct sockaddr *name, socklen_t namelen); */
-   PRINT("sys_bind ( %ld, %#lx, %lu )", SARG1, ARG2, ARG3);
+   PRINT("sys_bind ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u )"
+         , SARG1, ARG2, ARG3);
    PRE_REG_READ3(int, "bind",
                  int, s, const struct vki_sockaddr *, name, vki_socklen_t, namelen);
    ML_(generic_PRE_sys_bind)(tid, ARG1, ARG2, ARG3);
@@ -5203,7 +5219,8 @@ PRE(sys_accept)
     *     socklen_t * restrict addrlen);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_accept ( %ld, %#lx, %#lx )", SARG1, ARG2, ARG3);
+   PRINT("sys_accept ( %ld, %#" FMT_REGWORD "x, %#" FMT_REGWORD "x )"
+         , SARG1, ARG2, ARG3);
    PRE_REG_READ3(int, "accept",
                  int, s, struct vki_sockaddr *, addr,
                  vki_socklen_t *, addrlen);
@@ -5223,7 +5240,8 @@ PRE(sys_connect)
     * connect(int s, const struct sockaddr *name, socklen_t namelen);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_connect ( %ld, %#lx, %lu )", SARG1, ARG2, ARG3);
+   PRINT("sys_connect ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u )"
+         , SARG1, ARG2, ARG3);
    PRE_REG_READ3(int, "connect", int, s, const struct vki_sockaddr *, name,
                  vki_socklen_t, namelen);
    ML_(generic_PRE_sys_connect)(tid, ARG1, ARG2, ARG3);
@@ -5236,7 +5254,8 @@ PRE(sys_sendto)
     *     const struct sockaddr *to, socklen_t tolen);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_sendto ( %ld, %#lx, %lu, %ld, %#lx, %lu )",
+   PRINT("sys_sendto ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u, %ld, %#" 
+         FMT_REGWORD "x, %" FMT_REGWORD "u )",
          SARG1, ARG2, ARG3, SARG4, ARG5, ARG6);
    PRE_REG_READ6(vki_ssize_t, "sendto", int, s, const void *, msg,
                  vki_size_t, len, int, flags, const struct vki_sockaddr *, to,
@@ -5250,7 +5269,7 @@ PRE(sys_sendmsg)
     * sendmsg(int s, const struct msghdr *msg, int flags);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_sendmsg ( %ld, %#lx, %ld )", SARG1, ARG2, SARG3);
+   PRINT("sys_sendmsg ( %ld, %#" FMT_REGWORD "x, %ld )", SARG1, ARG2, SARG3);
    PRE_REG_READ3(vki_ssize_t, "sendmsg",
                  int, s, const struct vki_msghdr *, msg, int, flags);
    ML_(generic_PRE_sys_sendmsg)(tid, "msg", (struct vki_msghdr *)ARG2);
@@ -5263,7 +5282,8 @@ PRE(sys_recvfrom)
     *     struct sockaddr * restrict from, socklen_t * restrict fromlen);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_recvfrom ( %ld, %#lx, %lu, %ld, %#lx, %#lx )",
+   PRINT("sys_recvfrom ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u, %ld, %#" 
+         FMT_REGWORD "x, %#" FMT_REGWORD "x )",
          SARG1, ARG2, ARG3, SARG4, ARG5, ARG6);
    PRE_REG_READ6(vki_ssize_t, "recvfrom",
                  int, s, void *, buf, vki_size_t, len, int, flags,
@@ -5283,7 +5303,7 @@ PRE(sys_recvmsg)
     * recvmsg(int s, struct msghdr *msg, int flags);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_recvmsg ( %ld, %#lx, %ld )", SARG1, ARG2, SARG3);
+   PRINT("sys_recvmsg ( %ld, %#" FMT_REGWORD "x, %ld )", SARG1, ARG2, SARG3);
    PRE_REG_READ3(vki_ssize_t, "recvmsg",
                  int, s, struct vki_msghdr *, msg, int, flags);
    ML_(generic_PRE_sys_recvmsg)(tid, "msg", (struct vki_msghdr *)ARG2);
@@ -5300,7 +5320,8 @@ PRE(sys_getsockname)
     * getsockname(int s, struct sockaddr * restrict name,
     *     socklen_t * restrict namelen);
     */
-   PRINT("sys_getsockname ( %ld, %#lx, %#lx )", SARG1, ARG2, ARG3);
+   PRINT("sys_getsockname ( %ld, %#" FMT_REGWORD "x, %#" FMT_REGWORD "x )"
+         , SARG1, ARG2, ARG3);
    PRE_REG_READ3(int, "getsockname",
                  int, s, struct vki_sockaddr *, name, vki_socklen_t, namelen);
    ML_(generic_PRE_sys_getsockname)(tid, ARG1, ARG2, ARG3);
@@ -5318,7 +5339,7 @@ PRE(sys_getsockopt)
     * getsockopt(int s, int level, int optname, void * restrict optval,
     *     socklen_t * restrict optlen);
     */
-   PRINT("sys_getsockopt ( %ld, %ld, %ld, %#lx, %#lx )",
+   PRINT("sys_getsockopt ( %ld, %ld, %ld, %#" FMT_REGWORD "x, %#" FMT_REGWORD "x )",
          SARG1, SARG2, SARG3, ARG4, ARG5);
    PRE_REG_READ5(int, "getsockopt",
                  int, s, int, level, int, optname, void *, optval,
@@ -5341,7 +5362,7 @@ PRE(sys_setsockopt)
     * setsockopt(int s, int level, int optname, const void *optval,
     *     socklen_t optlen);
     */
-   PRINT("sys_setsockopt ( %ld, %ld, %ld, %#lx, %lu )",
+   PRINT("sys_setsockopt ( %ld, %ld, %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u )",
          SARG1, SARG2, SARG3, ARG4, ARG5);
    PRE_REG_READ5(int, "setsockopt", int, s, int, level, int, optname,
                  const void *, optval, vki_socklen_t, optlen);
@@ -5353,7 +5374,7 @@ PRE(sys_socketpair)
    /* int
     * socketpair(int d, int type, int protocol, int *sv);
     */
-   PRINT("sys_socketpair ( %ld, %ld, %ld, %#lx )",
+   PRINT("sys_socketpair ( %ld, %ld, %ld, %#" FMT_REGWORD "x )",
          SARG1, SARG2, SARG3, ARG4);
    PRE_REG_READ4(int, "socketpair",
                  int, d, int, type, int, protocol, int *, sv);
@@ -5379,7 +5400,7 @@ PRE(sys_semop)
 {
    /* int semop(int semid, struct sembuf *sops, size_t nsops); */
    *flags |= SfMayBlock;
-   PRINT("sys_semop ( %ld, %#lx, %lu )", SARG1, ARG2, ARG3);
+   PRINT("sys_semop ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u )", SARG1, ARG2, ARG3);
    PRE_REG_READ3(int, "semop",
                  int, semid, struct vki_sembuf *, sops, vki_size_t, nsops);
    ML_(generic_PRE_sys_semop)(tid, ARG1, ARG2, ARG3);
@@ -5396,13 +5417,13 @@ PRE(sys_semctl)
       break;
    case VKI_GETALL:
    case VKI_SETALL:
-      PRINT("sys_semctl ( %ld, %ld, %ld, %#lx )", SARG1, SARG2, SARG3, ARG4);
+      PRINT("sys_semctl ( %ld, %ld, %ld, %#" FMT_REGWORD "x )", SARG1, SARG2, SARG3, ARG4);
       PRE_REG_READ4(int, "semctl",
                     int, semid, int, semnum, int, cmd, unsigned short *, array);
       break;
    case VKI_IPC_STAT:
    case VKI_IPC_SET:
-      PRINT("sys_semctl ( %ld, %ld, %ld, %#lx )", SARG1, SARG2, SARG3, ARG4);
+      PRINT("sys_semctl ( %ld, %ld, %ld, %#" FMT_REGWORD "x )", SARG1, SARG2, SARG3, ARG4);
       PRE_REG_READ4(int, "semctl",
                     int, semid, int, semnum, int, cmd, struct vki_semid_ds *, buf);
       break;
@@ -5430,7 +5451,7 @@ PRE(sys_mq_open)
       /* mqd_t
        * mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
        */
-      PRINT("sys_mq_open ( %#lx(%s), %ld, %ld, %#lx )",
+      PRINT("sys_mq_open ( %#" FMT_REGWORD "x(%s), %ld, %ld, %#" FMT_REGWORD "x )",
             ARG1, (HChar*)ARG1, SARG2, ARG3, ARG4);
       PRE_REG_READ4(vki_mqd_t, "mq_open",
                     const char *, name, int, oflag,
@@ -5446,7 +5467,7 @@ PRE(sys_mq_open)
       /* mqd_t
        * mq_open(const char *name, int oflag);
        */
-      PRINT("sys_mq_open ( %#lx(%s), %ld )", ARG1, (HChar*)ARG1, SARG2);
+      PRINT("sys_mq_open ( %#" FMT_REGWORD "x(%s), %ld )", ARG1, (HChar*)ARG1, SARG2);
       PRE_REG_READ2(vki_mqd_t, "mq_open",
                     const char *, name, int, oflag);
       PRE_MEM_RASCIIZ("mq_open(name)", ARG1);
@@ -5490,7 +5511,7 @@ POST(sys_mq_close)
 PRE(sys_mq_unlink)
 {
    /* int mq_unlink(const char *name); */
-   PRINT("sys_mq_unlink ( %#lx(%s) )", ARG1,(char*)ARG1);
+   PRINT("sys_mq_unlink ( %#" FMT_REGWORD "x(%s) )", ARG1,(char*)ARG1);
    PRE_REG_READ1(int, "mq_unlink", const char *, name);
    PRE_MEM_RASCIIZ("mq_unlink(name)", ARG1);
 }
@@ -5502,7 +5523,8 @@ PRE(sys_mq_send)
     *     unsigned msg_prio);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_mq_send ( %ld, %#lx, %lu, %lu )", SARG1, ARG2, ARG3, ARG4);
+   PRINT("sys_mq_send ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u, %" FMT_REGWORD "u )"
+         , SARG1, ARG2, ARG3, ARG4);
    PRE_REG_READ4(int, "mq_send",
                  vki_mqd_t, mqdes, const char *, msg_ptr, vki_size_t, msg_len,
                  unsigned, msg_prio);
@@ -5521,7 +5543,8 @@ PRE(sys_mq_timedsend)
     *     unsigned msg_prio, const struct timespec *abs_timeout);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_mq_timedsend ( %ld, %#lx, %lu, %lu, %#lx )",
+   PRINT("sys_mq_timedsend ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u, %" 
+         FMT_REGWORD "u, %#" FMT_REGWORD "x )",
          SARG1, ARG2, ARG3, ARG4, ARG5);
    PRE_REG_READ5(int, "mq_timedsend",
                  vki_mqd_t, mqdes, const char *, msg_ptr, vki_size_t, msg_len,
@@ -5543,7 +5566,8 @@ PRE(sys_mq_receive)
     *     unsigned *msg_prio);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_mq_receive ( %ld, %#lx, %lu, %#lx )", SARG1, ARG2, ARG3, ARG4);
+   PRINT("sys_mq_receive ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u, %#" FMT_REGWORD "x )"
+         , SARG1, ARG2, ARG3, ARG4);
    PRE_REG_READ4(vki_ssize_t, "mq_receive",
                  vki_mqd_t, mqdes, char *, msg_ptr, vki_size_t, msg_len,
                  unsigned *, msg_prio);
@@ -5572,7 +5596,8 @@ PRE(sys_mq_timedreceive)
     *     unsigned *msg_prio, const struct timespec *restrict abs_timeout);
     */
    *flags |= SfMayBlock;
-   PRINT("sys_mq_timedreceive ( %ld, %#lx, %lu, %#lx, %#lx )",
+   PRINT("sys_mq_timedreceive ( %ld, %#" FMT_REGWORD "x, %" FMT_REGWORD "u, %#" 
+         FMT_REGWORD "x, %#" FMT_REGWORD "x )",
          SARG1, ARG2, ARG3, ARG4, ARG5);
    PRE_REG_READ5(vki_ssize_t, "mq_timedreceive",
                  vki_mqd_t, mqdes, char *, msg_ptr, vki_size_t, msg_len,
@@ -5602,7 +5627,7 @@ PRE(sys_mq_notify)
    /* int
     * mq_notify(mqd_t mqdes, const struct sigevent *notification);
     */
-   PRINT("sys_mq_notify( %ld, %#lx )", SARG1, ARG2);
+   PRINT("sys_mq_notify( %ld, %#" FMT_REGWORD "x )", SARG1, ARG2);
    PRE_REG_READ2(int, "mq_notify",
                  vki_mqd_t, mqdes, const struct vki_sigevent *, notification);
    if (!ML_(fd_allowed)(ARG1, "mq_notify", tid, False)) {
@@ -5654,7 +5679,7 @@ PRE(sys_mq_getattr)
    /* int
     * mq_getattr(mqd_t mqdes, struct mq_attr *mqstat);
     */
-   PRINT("sys_mq_getattr( %ld, %#lx )", SARG1, ARG2);
+   PRINT("sys_mq_getattr( %ld, %#" FMT_REGWORD "x )", SARG1, ARG2);
    PRE_REG_READ2(int, "mq_getattr",
                  vki_mqd_t, mqdes, struct vki_mq_attr *, mqstat);
    if (!ML_(fd_allowed)(ARG1, "mq_getattr", tid, False)) {
@@ -5684,7 +5709,7 @@ PRE(sys_mq_setattr)
     * mq_setattr(mqd_t mqdes, const struct mq_attr *restrict mqstat,
     *     struct mq_attr *restrict omqstat);
     */
-   PRINT("sys_mq_setattr( %ld, %#lx, %#lx )", SARG1, ARG2, ARG3);
+   PRINT("sys_mq_setattr( %ld, %#" FMT_REGWORD "x, %#" FMT_REGWORD "x )", SARG1, ARG2, ARG3);
    PRE_REG_READ3(int, "mq_setattr",
                  vki_mqd_t, mqdes, const struct vki_mq_attr *, mqstat,
                  struct vki_mq_attr *, omqstat);

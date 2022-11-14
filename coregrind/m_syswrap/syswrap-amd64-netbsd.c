@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 3; -*- */
 /*--------------------------------------------------------------------*/
-/*--- Platform-specific syscalls stuff.       syswrap-x86-netbsd.c ---*/
+/*--- Platform-specific syscalls stuff.     syswrap-amd64-netbsd.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
